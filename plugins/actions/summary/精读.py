@@ -277,11 +277,12 @@ class Action:
             default=True, description="是否在聊天界面显示操作状态更新。"
         )
         LLM_MODEL_ID: str = Field(
-            default="gemini-2.5-flash",
-            description="用于文本分析的内置LLM模型ID。",
+            default="",
+            description="用于文本分析的内置LLM模型ID。如果为空，则使用当前对话的模型。",
         )
         MIN_TEXT_LENGTH: int = Field(
-            default=200, description="进行深度分析所需的最小文本长度(字符数)。建议200字符以上。"
+            default=200,
+            description="进行深度分析所需的最小文本长度(字符数)。建议200字符以上。",
         )
         RECOMMENDED_MIN_LENGTH: int = Field(
             default=500, description="建议的最小文本长度，以获得最佳分析效果。"
@@ -395,7 +396,7 @@ class Action:
                         {"role": "assistant", "content": f"⚠️ {short_text_message}"}
                     ]
                 }
-            
+
             # Recommend for longer texts
             if len(original_content) < self.valves.RECOMMENDED_MIN_LENGTH:
                 if __event_emitter__:
@@ -439,8 +440,13 @@ class Action:
                 long_text_content=original_content,
             )
 
+            # 确定使用的模型
+            target_model = self.valves.LLM_MODEL_ID
+            if not target_model:
+                target_model = body.get("model")
+
             llm_payload = {
-                "model": self.valves.LLM_MODEL_ID,
+                "model": target_model,
                 "messages": [
                     {"role": "system", "content": SYSTEM_PROMPT_READING_ASSISTANT},
                     {"role": "user", "content": formatted_user_prompt},
@@ -452,7 +458,9 @@ class Action:
             if not user_obj:
                 raise ValueError(f"无法获取用户对象, 用户ID: {user_id}")
 
-            llm_response = await generate_chat_completion(__request__, llm_payload, user_obj)
+            llm_response = await generate_chat_completion(
+                __request__, llm_payload, user_obj
+            )
             assistant_response_content = llm_response["choices"][0]["message"][
                 "content"
             ]

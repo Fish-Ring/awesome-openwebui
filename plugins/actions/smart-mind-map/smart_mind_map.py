@@ -362,8 +362,8 @@ class Action:
             description="Whether to show action status updates in the chat interface.",
         )
         LLM_MODEL_ID: str = Field(
-            default="gemini-2.5-flash",
-            description="Built-in LLM model ID for text analysis.",
+            default="",
+            description="Built-in LLM model ID for text analysis. If empty, uses the current conversation's model.",
         )
         MIN_TEXT_LENGTH: int = Field(
             default=100,
@@ -514,8 +514,13 @@ class Action:
                 long_text_content=long_text_content,
             )
 
+            # Determine model to use
+            target_model = self.valves.LLM_MODEL_ID
+            if not target_model:
+                target_model = body.get("model")
+
             llm_payload = {
-                "model": self.valves.LLM_MODEL_ID,
+                "model": target_model,
                 "messages": [
                     {"role": "system", "content": SYSTEM_PROMPT_MINDMAP_ASSISTANT},
                     {"role": "user", "content": formatted_user_prompt},

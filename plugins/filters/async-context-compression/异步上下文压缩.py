@@ -367,20 +367,26 @@ class Filter:
         )
         # Token 相关参数
         compression_threshold_tokens: int = Field(
-            default=64000, ge=0, description="当上下文总 Token 数超过此值时，触发压缩 (全局默认值)"
+            default=64000,
+            ge=0,
+            description="当上下文总 Token 数超过此值时，触发压缩 (全局默认值)",
         )
         max_context_tokens: int = Field(
-            default=128000, ge=0, description="上下文的硬性上限。超过此值将强制移除最早的消息 (全局默认值)"
+            default=128000,
+            ge=0,
+            description="上下文的硬性上限。超过此值将强制移除最早的消息 (全局默认值)",
         )
         model_thresholds: dict = Field(
             default={},
-            description="针对特定模型的阈值覆盖配置。仅包含需要特殊配置的模型。"
+            description="针对特定模型的阈值覆盖配置。仅包含需要特殊配置的模型。",
         )
-        
+
         keep_first: int = Field(
             default=1, ge=0, description="始终保留最初的 N 条消息。设置为 0 则不保留。"
         )
-        keep_last: int = Field(default=6, ge=0, description="始终保留最近的 N 条完整消息。")
+        keep_last: int = Field(
+            default=6, ge=0, description="始终保留最近的 N 条完整消息。"
+        )
         summary_model: str = Field(
             default=None,
             description="用于生成摘要的模型 ID。留空则使用当前对话的模型。用于匹配 model_thresholds 中的配置。",
@@ -404,15 +410,15 @@ class Filter:
             session = self._SessionLocal()
             try:
                 # 查找现有记录
-                existing = (
-                    session.query(ChatSummary).filter_by(chat_id=chat_id).first()
-                )
+                existing = session.query(ChatSummary).filter_by(chat_id=chat_id).first()
 
                 if existing:
                     # [优化] 乐观锁检查：只有进度向前推进时才更新
                     if compressed_count <= existing.compressed_message_count:
                         if self.valves.debug_mode:
-                            print(f"[存储] 跳过更新：新进度 ({compressed_count}) 不大于现有进度 ({existing.compressed_message_count})")
+                            print(
+                                f"[存储] 跳过更新：新进度 ({compressed_count}) 不大于现有进度 ({existing.compressed_message_count})"
+                            )
                         return
 
                     # 更新现有记录
@@ -471,11 +477,11 @@ class Filter:
             return record.summary
         return None
 
-    def _count_tokens(self, text: str, model: str = "gpt-3.5-turbo") -> int:
+    def _count_tokens(self, text: str) -> int:
         """计算文本的 Token 数量"""
         if not text:
             return 0
-            
+
         if tiktoken:
             try:
                 # 统一使用 o200k_base 编码 (适配最新模型)
@@ -484,11 +490,13 @@ class Filter:
             except Exception as e:
                 if self.valves.debug_mode:
                     print(f"[Token计数] tiktoken 错误: {e}，回退到字符估算")
-        
+
         # 回退策略：粗略估算 (1 token ≈ 4 chars)
         return len(text) // 4
 
-    def _calculate_messages_tokens(self, messages: List[Dict], model: str = "gpt-3.5-turbo") -> int:
+    def _calculate_messages_tokens(
+        self, messages: List[Dict]
+    ) -> int:
         """计算消息列表的总 Token 数"""
         total_tokens = 0
         for msg in messages:
@@ -499,14 +507,14 @@ class Filter:
                 for part in content:
                     if isinstance(part, dict) and part.get("type") == "text":
                         text_content += part.get("text", "")
-                total_tokens += self._count_tokens(text_content, model)
+                total_tokens += self._count_tokens(text_content)
             else:
-                total_tokens += self._count_tokens(str(content), model)
+                total_tokens += self._count_tokens(str(content))
         return total_tokens
 
     def _get_model_thresholds(self, model_id: str) -> Dict[str, int]:
         """获取特定模型的阈值配置
-        
+
         优先级：
         1. 如果 model_thresholds 中存在该模型ID的配置，使用该配置
         2. 否则使用全局参数 compression_threshold_tokens 和 max_context_tokens
@@ -516,14 +524,14 @@ class Filter:
             if self.valves.debug_mode:
                 print(f"[配置] 使用模型特定配置: {model_id}")
             return self.valves.model_thresholds[model_id]
-        
+
         # 使用全局默认配置
         if self.valves.debug_mode:
             print(f"[配置] 模型 {model_id} 未在 model_thresholds 中，使用全局参数")
-            
+
         return {
             "compression_threshold_tokens": self.valves.compression_threshold_tokens,
-            "max_context_tokens": self.valves.max_context_tokens
+            "max_context_tokens": self.valves.max_context_tokens,
         }
 
     def _inject_summary_to_first_message(self, message: dict, summary: str) -> dict:
@@ -584,36 +592,36 @@ class Filter:
         # 记录原始消息的目标压缩进度，供 outlet 使用
         # 目标是压缩到倒数第 keep_last 条之前
         target_compressed_count = max(0, len(messages) - self.valves.keep_last)
-        
+
         # [优化] 简单的状态清理检查
         if chat_id in self.temp_state:
-             if self.valves.debug_mode:
+            if self.valves.debug_mode:
                 print(f"[Inlet] ⚠️ 覆盖未消费的旧状态 (Chat ID: {chat_id})")
-        
+
         self.temp_state[chat_id] = target_compressed_count
-        
+
         if self.valves.debug_mode:
             print(f"[Inlet] 记录目标压缩进度: {target_compressed_count}")
 
         # 加载摘要记录
         summary_record = await asyncio.to_thread(self._load_summary_record, chat_id)
-        
+
         final_messages = []
-        
+
         if summary_record:
             # 存在摘要，构建视图：[Head] + [Summary Message] + [Tail]
             # Tail 是从上次压缩点之后的所有消息
             compressed_count = summary_record.compressed_message_count
-            
+
             # 确保 compressed_count 合理
             if compressed_count > len(messages):
                 compressed_count = max(0, len(messages) - self.valves.keep_last)
-            
+
             # 1. 头部消息 (Keep First)
             head_messages = []
             if self.valves.keep_first > 0:
-                head_messages = messages[:self.valves.keep_first]
-            
+                head_messages = messages[: self.valves.keep_first]
+
             # 2. 摘要消息 (作为 User 消息插入)
             summary_content = (
                 f"【系统提示：以下是历史对话的摘要，仅供参考上下文，请勿对摘要内容进行回复，直接回答后续的最新问题】\n\n"
@@ -622,14 +630,14 @@ class Filter:
                 f"以下是最近的对话："
             )
             summary_msg = {"role": "user", "content": summary_content}
-            
+
             # 3. 尾部消息 (Tail) - 从上次压缩点开始的所有消息
             # 注意：这里必须确保不重复包含头部消息
             start_index = max(compressed_count, self.valves.keep_first)
             tail_messages = messages[start_index:]
-            
+
             final_messages = head_messages + [summary_msg] + tail_messages
-            
+
             # 发送状态通知
             if __event_emitter__:
                 await __event_emitter__(
@@ -641,15 +649,17 @@ class Filter:
                         },
                     }
                 )
-            
+
             if self.valves.debug_mode:
-                print(f"[Inlet] 应用摘要: Head({len(head_messages)}) + Summary + Tail({len(tail_messages)})")
+                print(
+                    f"[Inlet] 应用摘要: Head({len(head_messages)}) + Summary + Tail({len(tail_messages)})"
+                )
         else:
             # 没有摘要，使用原始消息
             final_messages = messages
 
         body["messages"] = final_messages
-        
+
         if self.valves.debug_mode:
             print(f"[Inlet] 最终发送: {len(body['messages'])} 条消息")
             print(f"{'='*60}\n")
@@ -701,17 +711,19 @@ class Filter:
         """
         try:
             messages = body.get("messages", [])
-            
+
             # 获取当前模型的阈值配置
             thresholds = self._get_model_thresholds(model)
-            compression_threshold_tokens = thresholds.get("compression_threshold_tokens", self.valves.compression_threshold_tokens)
+            compression_threshold_tokens = thresholds.get(
+                "compression_threshold_tokens", self.valves.compression_threshold_tokens
+            )
 
             if self.valves.debug_mode:
                 print(f"\n[🔍 后台计算] 开始 Token 计数...")
 
             # 在后台线程中计算 Token 数
             current_tokens = await asyncio.to_thread(
-                self._calculate_messages_tokens, messages, model
+                self._calculate_messages_tokens, messages
             )
 
             if self.valves.debug_mode:
@@ -762,18 +774,22 @@ class Filter:
             if target_compressed_count is None:
                 target_compressed_count = max(0, len(messages) - self.valves.keep_last)
                 if self.valves.debug_mode:
-                    print(f"[🤖 异步摘要任务] ⚠️ 无法获取 inlet 状态，使用当前消息数估算进度: {target_compressed_count}")
-            
+                    print(
+                        f"[🤖 异步摘要任务] ⚠️ 无法获取 inlet 状态，使用当前消息数估算进度: {target_compressed_count}"
+                    )
+
             # 2. 确定待压缩的消息范围 (Middle)
             start_index = self.valves.keep_first
             end_index = len(messages) - self.valves.keep_last
             if self.valves.keep_last == 0:
                 end_index = len(messages)
-            
+
             # 确保索引有效
             if start_index >= end_index:
                 if self.valves.debug_mode:
-                    print(f"[🤖 异步摘要任务] 中间消息为空 (Start: {start_index}, End: {end_index})，跳过")
+                    print(
+                        f"[🤖 异步摘要任务] 中间消息为空 (Start: {start_index}, End: {end_index})，跳过"
+                    )
                 return
 
             middle_messages = messages[start_index:end_index]
@@ -784,36 +800,48 @@ class Filter:
             # 3. 检查 Token 上限并截断 (Max Context Truncation)
             # [优化] 使用摘要模型(如果有)的阈值来决定能处理多少中间消息
             # 这样可以用长窗口模型(如 gemini-flash)来压缩超过当前模型窗口的历史记录
-            summary_model_id = self.valves.summary_model or body.get("model", "gpt-3.5-turbo")
-            
+            summary_model_id = self.valves.summary_model or body.get("model")
+
             thresholds = self._get_model_thresholds(summary_model_id)
             # 注意：这里使用的是摘要模型的最大上下文限制
-            max_context_tokens = thresholds.get("max_context_tokens", self.valves.max_context_tokens)
-            
+            max_context_tokens = thresholds.get(
+                "max_context_tokens", self.valves.max_context_tokens
+            )
+
             if self.valves.debug_mode:
-                print(f"[🤖 异步摘要任务] 使用模型 {summary_model_id} 的上限: {max_context_tokens} Tokens")
-            
+                print(
+                    f"[🤖 异步摘要任务] 使用模型 {summary_model_id} 的上限: {max_context_tokens} Tokens"
+                )
+
             # 计算当前总 Token (使用摘要模型进行计数)
-            total_tokens = await asyncio.to_thread(self._calculate_messages_tokens, messages, summary_model_id)
-            
+            total_tokens = await asyncio.to_thread(
+                self._calculate_messages_tokens, messages, summary_model_id
+            )
+
             if total_tokens > max_context_tokens:
                 excess_tokens = total_tokens - max_context_tokens
                 if self.valves.debug_mode:
-                    print(f"[🤖 异步摘要任务] ⚠️ 总 Token ({total_tokens}) 超过摘要模型上限 ({max_context_tokens})，需要移除约 {excess_tokens} Token")
-                
+                    print(
+                        f"[🤖 异步摘要任务] ⚠️ 总 Token ({total_tokens}) 超过摘要模型上限 ({max_context_tokens})，需要移除约 {excess_tokens} Token"
+                    )
+
                 # 从 middle_messages 头部开始移除
                 removed_tokens = 0
                 removed_count = 0
-                
+
                 while removed_tokens < excess_tokens and middle_messages:
                     msg_to_remove = middle_messages.pop(0)
-                    msg_tokens = self._count_tokens(str(msg_to_remove.get("content", "")), summary_model_id)
+                    msg_tokens = self._count_tokens(
+                        str(msg_to_remove.get("content", ""))
+                    )
                     removed_tokens += msg_tokens
                     removed_count += 1
-                
+
                 if self.valves.debug_mode:
-                    print(f"[🤖 异步摘要任务] 已移除 {removed_count} 条消息，共 {removed_tokens} Token")
-            
+                    print(
+                        f"[🤖 异步摘要任务] 已移除 {removed_count} 条消息，共 {removed_tokens} Token"
+                    )
+
             if not middle_messages:
                 if self.valves.debug_mode:
                     print(f"[🤖 异步摘要任务] 截断后中间消息为空，跳过摘要生成")
@@ -824,7 +852,7 @@ class Filter:
 
             # 5. 调用 LLM 生成新摘要
             # 注意：这里不再传入 previous_summary，因为旧摘要（如果有）已经包含在 middle_messages 里了
-            
+
             # 发送开始生成摘要的状态通知
             if __event_emitter__:
                 await __event_emitter__(
@@ -837,13 +865,17 @@ class Filter:
                     }
                 )
 
-            new_summary = await self._call_summary_llm(None, conversation_text, body, user_data)
+            new_summary = await self._call_summary_llm(
+                None, conversation_text, body, user_data
+            )
 
             # 6. 保存新摘要
             if self.valves.debug_mode:
                 print("[优化] 正在后台线程中保存摘要，以避免阻塞事件循环。")
-            
-            await asyncio.to_thread(self._save_summary, chat_id, new_summary, target_compressed_count)
+
+            await asyncio.to_thread(
+                self._save_summary, chat_id, new_summary, target_compressed_count
+            )
 
             # 发送完成状态通知
             if __event_emitter__:
@@ -851,7 +883,7 @@ class Filter:
                     {
                         "type": "status",
                         "data": {
-                            "description": f"上下文摘要已更新 (节省 {len(middle_messages)} 条消息)",
+                            "description": f"上下文摘要已更新 (已压缩 {len(middle_messages)} 条消息)",
                             "done": True,
                         },
                     }
@@ -859,11 +891,14 @@ class Filter:
 
             if self.valves.debug_mode:
                 print(f"[🤖 异步摘要任务] ✅ 完成！新摘要长度: {len(new_summary)} 字符")
-                print(f"[🤖 异步摘要任务] 进度更新: 已压缩至原始第 {target_compressed_count} 条消息")
+                print(
+                    f"[🤖 异步摘要任务] 进度更新: 已压缩至原始第 {target_compressed_count} 条消息"
+                )
 
         except Exception as e:
             print(f"[🤖 异步摘要任务] ❌ 错误: {str(e)}")
             import traceback
+
             traceback.print_exc()
 
     def _format_messages_for_summary(self, messages: list) -> str:
@@ -893,7 +928,11 @@ class Filter:
         return "\n\n".join(formatted)
 
     async def _call_summary_llm(
-        self, previous_summary: Optional[str], new_conversation_text: str, body: dict, user_data: dict
+        self,
+        previous_summary: Optional[str],
+        new_conversation_text: str,
+        body: dict,
+        user_data: dict,
     ) -> str:
         """
         使用 Open WebUI 内置方法调用 LLM 生成摘要
@@ -960,7 +999,7 @@ class Filter:
             if self.valves.debug_mode:
                 print("[优化] 正在后台线程中获取用户对象，以避免阻塞事件循环。")
             user = await asyncio.to_thread(Users.get_user_by_id, user_id)
-            
+
             if not user:
                 raise ValueError(f"无法找到用户: {user_id}")
 

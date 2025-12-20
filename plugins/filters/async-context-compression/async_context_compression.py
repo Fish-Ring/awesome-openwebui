@@ -383,360 +383,7 @@ class Filter:
             description="Hard limit for context. Exceeding this value will force removal of earliest messages (Global Default)",
         )
         model_thresholds: dict = Field(
-            default={
-                # Groq
-                "groq-openai/gpt-oss-20b": {
-                    "max_context_tokens": 8000,
-                    "compression_threshold_tokens": 5600,
-                },
-                "groq-openai/gpt-oss-120b": {
-                    "max_context_tokens": 8000,
-                    "compression_threshold_tokens": 5600,
-                },
-                # Qwen (ModelScope / CF)
-                "modelscope-Qwen/Qwen3-Coder-480B-A35B-Instruct": {
-                    "max_context_tokens": 256000,
-                    "compression_threshold_tokens": 179200,
-                },
-                "cfchatqwen-qwen3-max-search": {
-                    "max_context_tokens": 262144,
-                    "compression_threshold_tokens": 183500,
-                },
-                "modelscope-Qwen/Qwen3-235B-A22B-Thinking-2507": {
-                    "max_context_tokens": 262144,
-                    "compression_threshold_tokens": 183500,
-                },
-                "cfchatqwen-qwen3-max": {
-                    "max_context_tokens": 262144,
-                    "compression_threshold_tokens": 183500,
-                },
-                "cfchatqwen-qwen3-vl-plus-thinking": {
-                    "max_context_tokens": 262144,
-                    "compression_threshold_tokens": 183500,
-                },
-                "cfchatqwen-qwen3-coder-plus-search": {
-                    "max_context_tokens": 1048576,
-                    "compression_threshold_tokens": 734000,
-                },
-                "cfchatqwen-qwen3-vl-plus": {
-                    "max_context_tokens": 262144,
-                    "compression_threshold_tokens": 183500,
-                },
-                "cfchatqwen-qwen3-coder-plus": {
-                    "max_context_tokens": 1048576,
-                    "compression_threshold_tokens": 734000,
-                },
-                "cfchatqwen-qwen3-omni-flash-thinking": {
-                    "max_context_tokens": 65536,
-                    "compression_threshold_tokens": 45875,
-                },
-                "cfchatqwen-qwen3-omni-flash": {
-                    "max_context_tokens": 65536,
-                    "compression_threshold_tokens": 45875,
-                },
-                "cfchatqwen-qwen3-next-80b-a3b-thinking": {
-                    "max_context_tokens": 262144,
-                    "compression_threshold_tokens": 183500,
-                },
-                "modelscope-Qwen/Qwen3-VL-235B-A22B-Instruct": {
-                    "max_context_tokens": 262144,
-                    "compression_threshold_tokens": 183500,
-                },
-                "cfchatqwen-qwen3-next-80b-a3b-thinking-search": {
-                    "max_context_tokens": 262144,
-                    "compression_threshold_tokens": 183500,
-                },
-                "cfchatqwen-qwen3-next-80b-a3b": {
-                    "max_context_tokens": 262144,
-                    "compression_threshold_tokens": 183500,
-                },
-                "cfchatqwen-qwen3-235b-a22b-thinking-search": {
-                    "max_context_tokens": 131072,
-                    "compression_threshold_tokens": 91750,
-                },
-                "cfchatqwen-qwen3-235b-a22b": {
-                    "max_context_tokens": 131072,
-                    "compression_threshold_tokens": 91750,
-                },
-                "cfchatqwen-qwen3-235b-a22b-thinking": {
-                    "max_context_tokens": 131072,
-                    "compression_threshold_tokens": 91750,
-                },
-                "cfchatqwen-qwen3-coder-flash-search": {
-                    "max_context_tokens": 262144,
-                    "compression_threshold_tokens": 183500,
-                },
-                "cfchatqwen-qwen3-coder-flash": {
-                    "max_context_tokens": 262144,
-                    "compression_threshold_tokens": 183500,
-                },
-                "cfchatqwen-qwen3-max-2025-10-30": {
-                    "max_context_tokens": 262144,
-                    "compression_threshold_tokens": 183500,
-                },
-                "cfchatqwen-qwen3-max-2025-10-30-thinking": {
-                    "max_context_tokens": 262144,
-                    "compression_threshold_tokens": 183500,
-                },
-                "cfchatqwen-qwen3-max-2025-10-30-thinking-search": {
-                    "max_context_tokens": 262144,
-                    "compression_threshold_tokens": 183500,
-                },
-                "modelscope-Qwen/Qwen3-235B-A22B-Instruct-2507": {
-                    "max_context_tokens": 262144,
-                    "compression_threshold_tokens": 183500,
-                },
-                "cfchatqwen-qwen3-vl-30b-a3b": {
-                    "max_context_tokens": 131072,
-                    "compression_threshold_tokens": 91750,
-                },
-                "cfchatqwen-qwen3-vl-30b-a3b-thinking": {
-                    "max_context_tokens": 131072,
-                    "compression_threshold_tokens": 91750,
-                },
-                # Gemini
-                "gemini-2.5-pro-search": {
-                    "max_context_tokens": 1048576,
-                    "compression_threshold_tokens": 734000,
-                },
-                "gemini-2.5-flash-search": {
-                    "max_context_tokens": 1048576,
-                    "compression_threshold_tokens": 734000,
-                },
-                "gemini-2.5-flash": {
-                    "max_context_tokens": 1048576,
-                    "compression_threshold_tokens": 734000,
-                },
-                "gemini-2.5-flash-lite": {
-                    "max_context_tokens": 1048576,
-                    "compression_threshold_tokens": 734000,
-                },
-                "gemini-2.5-flash-lite-search": {
-                    "max_context_tokens": 1048576,
-                    "compression_threshold_tokens": 734000,
-                },
-                "gemini-2.5-pro": {
-                    "max_context_tokens": 1048576,
-                    "compression_threshold_tokens": 734000,
-                },
-                "gemini-2.0-flash-search": {
-                    "max_context_tokens": 1048576,
-                    "compression_threshold_tokens": 734000,
-                },
-                "gemini-2.0-flash": {
-                    "max_context_tokens": 1048576,
-                    "compression_threshold_tokens": 734000,
-                },
-                "gemini-2.0-flash-exp": {
-                    "max_context_tokens": 1048576,
-                    "compression_threshold_tokens": 734000,
-                },
-                "gemini-2.0-flash-lite": {
-                    "max_context_tokens": 1048576,
-                    "compression_threshold_tokens": 734000,
-                },
-                "copilot-gemini-2.5-pro": {
-                    "max_context_tokens": 128000,
-                    "compression_threshold_tokens": 89600,
-                },
-                "gemini-pro-latest": {
-                    "max_context_tokens": 1048576,
-                    "compression_threshold_tokens": 734000,
-                },
-                "gemini-3-pro-preview": {
-                    "max_context_tokens": 128000,
-                    "compression_threshold_tokens": 89600,
-                },
-                "gemini-pro-latest-search": {
-                    "max_context_tokens": 1048576,
-                    "compression_threshold_tokens": 734000,
-                },
-                "gemini-flash-latest": {
-                    "max_context_tokens": 1048576,
-                    "compression_threshold_tokens": 734000,
-                },
-                "gemini-flash-latest-search": {
-                    "max_context_tokens": 1048576,
-                    "compression_threshold_tokens": 734000,
-                },
-                "gemini-flash-lite-latest-search": {
-                    "max_context_tokens": 1048576,
-                    "compression_threshold_tokens": 734000,
-                },
-                "gemini-flash-lite-latest": {
-                    "max_context_tokens": 1048576,
-                    "compression_threshold_tokens": 734000,
-                },
-                "gemini-robotics-er-1.5-preview": {
-                    "max_context_tokens": 1048576,
-                    "compression_threshold_tokens": 734000,
-                },
-                # DeepSeek
-                "modelscope-deepseek-ai/DeepSeek-V3.1": {
-                    "max_context_tokens": 128000,
-                    "compression_threshold_tokens": 89600,
-                },
-                "cfdeepseek-deepseek-search": {
-                    "max_context_tokens": 128000,
-                    "compression_threshold_tokens": 89600,
-                },
-                "openrouter-deepseek/deepseek-r1-0528:free": {
-                    "max_context_tokens": 163840,
-                    "compression_threshold_tokens": 114688,
-                },
-                "modelscope-deepseek-ai/DeepSeek-V3.2-Exp": {
-                    "max_context_tokens": 128000,
-                    "compression_threshold_tokens": 89600,
-                },
-                "cfdeepseek-deepseek-r1-search": {
-                    "max_context_tokens": 128000,
-                    "compression_threshold_tokens": 89600,
-                },
-                "cfdeepseek-deepseek-r1": {
-                    "max_context_tokens": 128000,
-                    "compression_threshold_tokens": 89600,
-                },
-                "openrouter-deepseek/deepseek-chat-v3.1:free": {
-                    "max_context_tokens": 163800,
-                    "compression_threshold_tokens": 114660,
-                },
-                "modelscope-deepseek-ai/DeepSeek-R1-0528": {
-                    "max_context_tokens": 128000,
-                    "compression_threshold_tokens": 89600,
-                },
-                "cfdeepseek-deepseek": {
-                    "max_context_tokens": 128000,
-                    "compression_threshold_tokens": 89600,
-                },
-                # Kimi (Moonshot)
-                "cfkimi-kimi-k2-search": {
-                    "max_context_tokens": 128000,
-                    "compression_threshold_tokens": 89600,
-                },
-                "cfkimi-kimi-k1.5-search": {
-                    "max_context_tokens": 128000,
-                    "compression_threshold_tokens": 89600,
-                },
-                "cfkimi-kimi-k1.5-thinking-search": {
-                    "max_context_tokens": 128000,
-                    "compression_threshold_tokens": 89600,
-                },
-                "cfkimi-kimi-research": {
-                    "max_context_tokens": 128000,
-                    "compression_threshold_tokens": 89600,
-                },
-                "openrouter-moonshotai/kimi-k2:free": {
-                    "max_context_tokens": 32768,
-                    "compression_threshold_tokens": 22937,
-                },
-                "cfkimi-kimi-k2": {
-                    "max_context_tokens": 128000,
-                    "compression_threshold_tokens": 89600,
-                },
-                "cfkimi-kimi-k1.5": {
-                    "max_context_tokens": 128000,
-                    "compression_threshold_tokens": 89600,
-                },
-                # GPT / OpenAI
-                "gpt-4.1": {
-                    "max_context_tokens": 128000,
-                    "compression_threshold_tokens": 89600,
-                },
-                "gpt-4o": {
-                    "max_context_tokens": 64000,
-                    "compression_threshold_tokens": 44800,
-                },
-                "gpt-5": {
-                    "max_context_tokens": 128000,
-                    "compression_threshold_tokens": 89600,
-                },
-                "github-gpt-4.1": {
-                    "max_context_tokens": 7500,
-                    "compression_threshold_tokens": 5250,
-                },
-                "gpt-5-mini": {
-                    "max_context_tokens": 128000,
-                    "compression_threshold_tokens": 89600,
-                },
-                "gpt-5.1": {
-                    "max_context_tokens": 128000,
-                    "compression_threshold_tokens": 89600,
-                },
-                "gpt-5.1-codex": {
-                    "max_context_tokens": 128000,
-                    "compression_threshold_tokens": 89600,
-                },
-                "gpt-5.1-codex-mini": {
-                    "max_context_tokens": 128000,
-                    "compression_threshold_tokens": 89600,
-                },
-                "gpt-5-codex": {
-                    "max_context_tokens": 200000,
-                    "compression_threshold_tokens": 140000,
-                },
-                "github-gpt-4.1-mini": {
-                    "max_context_tokens": 7500,
-                    "compression_threshold_tokens": 5250,
-                },
-                "openrouter-openai/gpt-oss-20b:free": {
-                    "max_context_tokens": 128000,
-                    "compression_threshold_tokens": 89600,
-                },
-                # Claude / Anthropic
-                "claude-sonnet-4.5": {
-                    "max_context_tokens": 128000,
-                    "compression_threshold_tokens": 89600,
-                },
-                "claude-haiku-4.5": {
-                    "max_context_tokens": 128000,
-                    "compression_threshold_tokens": 89600,
-                },
-                "copilot-claude-opus-41": {
-                    "max_context_tokens": 80000,
-                    "compression_threshold_tokens": 56000,
-                },
-                "copilot-claude-sonnet-4": {
-                    "max_context_tokens": 80000,
-                    "compression_threshold_tokens": 56000,
-                },
-                # Other / OpenRouter / OSWE
-                "oswe-vscode-insiders": {
-                    "max_context_tokens": 256000,
-                    "compression_threshold_tokens": 179200,
-                },
-                "modelscope-MiniMax/MiniMax-M2": {
-                    "max_context_tokens": 204800,
-                    "compression_threshold_tokens": 143360,
-                },
-                "oswe-vscode-prime": {
-                    "max_context_tokens": 200000,
-                    "compression_threshold_tokens": 140000,
-                },
-                "grok-code-fast-1": {
-                    "max_context_tokens": 128000,
-                    "compression_threshold_tokens": 89600,
-                },
-                "copilot-auto": {
-                    "max_context_tokens": 128000,
-                    "compression_threshold_tokens": 89600,
-                },
-                "modelscope-ZhipuAI/GLM-4.6": {
-                    "max_context_tokens": 32000,
-                    "compression_threshold_tokens": 22400,
-                },
-                "openrouter-x-ai/grok-4.1-fast:free": {
-                    "max_context_tokens": 2000000,
-                    "compression_threshold_tokens": 1400000,
-                },
-                "openrouter-qwen/qwen3-coder:free": {
-                    "max_context_tokens": 262000,
-                    "compression_threshold_tokens": 183400,
-                },
-                "openrouter-qwen/qwen3-235b-a22b:free": {
-                    "max_context_tokens": 40960,
-                    "compression_threshold_tokens": 28672,
-                },
-            },
+            default={},
             description="Threshold override configuration for specific models. Only includes models requiring special configuration.",
         )
 
@@ -847,7 +494,7 @@ class Filter:
             return record.summary
         return None
 
-    def _count_tokens(self, text: str, model: str = "gpt-3.5-turbo") -> int:
+    def _count_tokens(self, text: str) -> int:
         """Counts the number of tokens in the text."""
         if not text:
             return 0
@@ -866,9 +513,7 @@ class Filter:
         # Fallback strategy: Rough estimation (1 token ≈ 4 chars)
         return len(text) // 4
 
-    def _calculate_messages_tokens(
-        self, messages: List[Dict], model: str = "gpt-3.5-turbo"
-    ) -> int:
+    def _calculate_messages_tokens(self, messages: List[Dict]) -> int:
         """Calculates the total tokens for a list of messages."""
         total_tokens = 0
         for msg in messages:
@@ -879,9 +524,9 @@ class Filter:
                 for part in content:
                     if isinstance(part, dict) and part.get("type") == "text":
                         text_content += part.get("text", "")
-                total_tokens += self._count_tokens(text_content, model)
+                total_tokens += self._count_tokens(text_content)
             else:
-                total_tokens += self._count_tokens(str(content), model)
+                total_tokens += self._count_tokens(str(content))
         return total_tokens
 
     def _get_model_thresholds(self, model_id: str) -> Dict[str, int]:
@@ -1101,7 +746,7 @@ class Filter:
 
             # Calculate Token count in a background thread
             current_tokens = await asyncio.to_thread(
-                self._calculate_messages_tokens, messages, model
+                self._calculate_messages_tokens, messages
             )
 
             if self.valves.debug_mode:
@@ -1197,7 +842,7 @@ class Filter:
 
             # Calculate current total Tokens (using summary model for counting)
             total_tokens = await asyncio.to_thread(
-                self._calculate_messages_tokens, messages, summary_model_id
+                self._calculate_messages_tokens, messages
             )
 
             if total_tokens > max_context_tokens:
@@ -1213,9 +858,7 @@ class Filter:
 
                 while removed_tokens < excess_tokens and middle_messages:
                     msg_to_remove = middle_messages.pop(0)
-                    msg_tokens = self._count_tokens(
-                        str(msg_to_remove.get("content", "")), summary_model_id
-                    )
+                    msg_tokens = self._count_tokens(str(msg_to_remove.get("content", "")))
                     removed_tokens += msg_tokens
                     removed_count += 1
 
@@ -1269,7 +912,7 @@ class Filter:
                     {
                         "type": "status",
                         "data": {
-                            "description": f"Context summary updated (Saved {len(middle_messages)} messages)",
+                            "description": f"Context summary updated (Compressed {len(middle_messages)} messages)",
                             "done": True,
                         },
                     }
