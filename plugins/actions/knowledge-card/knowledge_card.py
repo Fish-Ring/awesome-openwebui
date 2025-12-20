@@ -1,11 +1,11 @@
 """
-title: 闪记卡 (Flash Card)
-author: Antigravity
-author_url: https://github.com/open-webui
-funding_url: https://github.com/open-webui
+title: Flash Card
+author: Fu-Jie
+author_url: https://github.com/Fu-Jie
+funding_url: https://github.com/Fu-Jie/awesome-openwebui
 version: 0.2.1
 icon_url: data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj48c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjRkZENzAwIi8+PHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjRkZBNzAwIi8+PC9saW5lYXJHcmFkaWVudD48L2RlZnM+PHBhdGggZD0iTTEzIDJMMyA3djEzbDEwIDV2LTZ6IiBmaWxsPSJ1cmwoI2cpIi8+PHBhdGggZD0iTTEzIDJ2Nmw4LTN2MTNsLTggM3YtNnoiIGZpbGw9IiM2NjdlZWEiLz48cGF0aCBkPSJNMTMgMnY2bTAgNXYxMCIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjEuNSIgc3Ryb2tlLW9wYWNpdHk9IjAuMyIvPjwvc3ZnPg==
-description: 快速将文本提炼为精美的学习记忆卡片，支持核心要点提取与分类。
+description: Quickly generates beautiful flashcards from text, extracting key points and categories.
 """
 
 from pydantic import BaseModel, Field
@@ -24,20 +24,23 @@ class Action:
     class Valves(BaseModel):
         model_id: str = Field(
             default="",
-            description="用于生成卡片内容的模型 ID。如果为空，则使用当前模型。",
+            description="Model ID used for generating card content. If empty, uses the current model.",
         )
         min_text_length: int = Field(
-            default=50, description="生成闪记卡所需的最小文本长度（字符数）。"
+            default=50,
+            description="Minimum text length required to generate a flashcard (characters).",
         )
         max_text_length: int = Field(
             default=2000,
-            description="建议的最大文本长度。超过此长度建议使用深度分析工具。",
+            description="Recommended maximum text length. For longer texts, deep analysis tools are recommended.",
         )
         language: str = Field(
-            default="zh", description="卡片内容的目标语言 (例如 'zh', 'en')。"
+            default="en",
+            description="Target language for card content (e.g., 'en', 'zh').",
         )
         show_status: bool = Field(
-            default=True, description="是否在聊天界面显示状态更新。"
+            default=True,
+            description="Whether to show status updates in the chat interface.",
         )
 
     def __init__(self):
@@ -72,7 +75,7 @@ class Action:
                         "type": "notification",
                         "data": {
                             "type": "warning",
-                            "content": f"文本过短（{text_length}字符），建议至少{self.valves.min_text_length}字符。",
+                            "content": f"Text too short ({text_length} chars), recommended at least {self.valves.min_text_length} chars.",
                         },
                     }
                 )
@@ -85,7 +88,7 @@ class Action:
                         "type": "notification",
                         "data": {
                             "type": "info",
-                            "content": f"文本较长（{text_length}字符），建议使用'墨海拾贝'进行深度分析。",
+                            "content": f"Text quite long ({text_length} chars), consider using 'Deep Reading' for deep analysis.",
                         },
                     }
                 )
@@ -97,7 +100,7 @@ class Action:
                     "type": "notification",
                     "data": {
                         "type": "info",
-                        "content": "⚡ 正在生成闪记卡...",
+                        "content": "⚡ Generating Flash Card...",
                     },
                 }
             )
@@ -110,29 +113,29 @@ class Action:
             model = self.valves.model_id if self.valves.model_id else body.get("model")
 
             system_prompt = f"""
-你是一个闪记卡生成专家，专注于创建适合学习和记忆的知识卡片。你的任务是将文本提炼成简洁、易记的学习卡片。
+You are a Flash Card Generation Expert, specializing in creating knowledge cards suitable for learning and memorization. Your task is to distill text into concise, easy-to-remember flashcards.
 
-请提取以下字段，并以 JSON 格式返回：
-1. "title": 创建一个简短、精准的标题（6-12 字），突出核心概念
-2. "summary": 用一句话总结核心要义（20-40 字），要通俗易懂、便于记忆
-3. "key_points": 列出 3-5 个关键记忆点（每个 10-20 字）
-   - 每个要点应该是独立的知识点
-   - 使用简洁、口语化的表达
-   - 避免冗长的句子
-4. "tags": 列出 2-4 个分类标签（每个 2-5 字）
-5. "category": 选择一个主分类（如：概念、技能、事实、方法等）
+Please extract the following fields and return them in JSON format:
+1. "title": Create a short, precise title (3-8 words), highlighting the core concept.
+2. "summary": Summarize the core essence in one sentence (10-25 words), making it easy to understand and remember.
+3. "key_points": List 3-5 key memory points (5-15 words each).
+   - Each point should be an independent knowledge unit.
+   - Use concise, conversational expression.
+   - Avoid long sentences.
+4. "tags": List 2-4 classification tags (1-3 words each).
+5. "category": Choose a main category (e.g., Concept, Skill, Fact, Method, etc.).
 
-目标语言: {self.valves.language}
+Target Language: {self.valves.language}
 
-重要原则：
-- **极简主义**: 每个要点都要精炼到极致
-- **记忆优先**: 内容要便于记忆和回忆
-- **核心聚焦**: 只提取最核心的知识点
-- **口语化**: 使用通俗易懂的语言
-- 只返回 JSON 对象，不要包含 markdown 格式
+Important Principles:
+- **Minimalism**: Refine each point to the extreme.
+- **Memory First**: Content should be easy to memorize and recall.
+- **Core Focus**: Extract only the most core knowledge points.
+- **Conversational**: Use easy-to-understand language.
+- Return ONLY the JSON object, do not include markdown formatting.
             """
 
-            prompt = f"请将以下文本提炼成一张学习记忆卡片：\n\n{target_message}"
+            prompt = f"Please refine the following text into a learning flashcard:\n\n{target_message}"
 
             payload = {
                 "model": model,
@@ -163,7 +166,7 @@ class Action:
                             "type": "notification",
                             "data": {
                                 "type": "error",
-                                "content": "生成卡片数据失败，请重试。",
+                                "content": "Failed to generate card data, please try again.",
                             },
                         }
                     )
@@ -173,11 +176,6 @@ class Action:
             html_card = self.generate_html_card(card_data)
 
             # 3. Append to message
-            # We append it to the user message so it shows up as part of the interaction
-            # Or we can append it to the assistant response if we were a Pipe, but this is an Action.
-            # Actions usually modify the input or trigger a side effect.
-            # To show the card, we can append it to the message content.
-
             html_embed_tag = f"```html\n{html_card}\n```"
             body["messages"][-1]["content"] += f"\n\n{html_embed_tag}"
 
@@ -187,7 +185,7 @@ class Action:
                         "type": "notification",
                         "data": {
                             "type": "success",
-                            "content": "⚡ 闪记卡生成成功！",
+                            "content": "⚡ Flash Card generated successfully!",
                         },
                     }
                 )
@@ -202,7 +200,7 @@ class Action:
                         "type": "notification",
                         "data": {
                             "type": "error",
-                            "content": f"生成知识卡片时出错: {str(e)}",
+                            "content": f"Error generating knowledge card: {str(e)}",
                         },
                     }
                 )
@@ -519,7 +517,7 @@ class Action:
 
         # Enhanced HTML structure
         html = f"""<!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -530,20 +528,20 @@ class Action:
         <div class="knowledge-card">
             <div class="card-inner">
                 <div class="card-header">
-                    <div class="card-category">{data.get('category', '通用知识')}</div>
-                    <h2 class="card-title">{data.get('title', '知识卡片')}</h2>
+                    <div class="card-category">{data.get('category', 'General Knowledge')}</div>
+                    <h2 class="card-title">{data.get('title', 'Flash Card')}</h2>
                 </div>
                 <div class="card-body">
                     <div class="card-summary">
                         {data.get('summary', '')}
                     </div>
-                    <div class="card-section-title">核心要点</div>
+                    <div class="card-section-title">Key Points</div>
                     <ul class="card-points">
                         {''.join([f'<li>{point}</li>' for point in data.get('key_points', [])])}
                     </ul>
                 </div>
                 <div class="card-footer">
-                    <span class="card-tag-label">标签</span>
+                    <span class="card-tag-label">Tags</span>
                     {''.join([f'<span class="card-tag">#{tag}</span>' for tag in data.get('tags', [])])}
                 </div>
             </div>

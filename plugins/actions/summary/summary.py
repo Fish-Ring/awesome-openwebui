@@ -1,8 +1,8 @@
 """
 title: Deep Reading & Summary
-author: Antigravity
-author_url: https://github.com/open-webui
-funding_url: https://github.com/open-webui
+author: Fu-Jie
+author_url: https://github.com/Fu-Jie
+funding_url: https://github.com/Fu-Jie/awesome-openwebui
 version: 0.1.0
 icon_url: data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwYXRoIGQ9Ik0yIDNIMGEyIDIgMCAwIDAgMiAyIi8+PHBhdGggZD0iTTIyIDNIMjBhMiAyIDAgMCAwLTIgMiIvPjxwYXRoIGQ9Ik0yIDdoMjB2MTRhMiAyIDAgMCAxLTIgMmgtMTZhMiAyIDAgMCAxLTItMnYtMTQiLz48cGF0aCBkPSJNMTEgMTJ2NiIvPjxwYXRoIGQ9Ik0xNiAxMnY2Ii8+PHBhdGggZD0iTTYgMTJ2NiIvPjwvc3ZnPg==
 description: Provides deep reading analysis and summarization for long texts.
@@ -28,69 +28,69 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # =================================================================
-# 内部 LLM 提示词设计
+# Internal LLM Prompts
 # =================================================================
 
 SYSTEM_PROMPT_READING_ASSISTANT = """
-你是一个专业的深度文本分析专家，擅长精读长篇文本并提炼精华。你的任务是进行全面、深入的分析。
+You are a professional Deep Text Analysis Expert, specializing in reading long texts and extracting the essence. Your task is to conduct a comprehensive and in-depth analysis.
 
-请提供以下内容：
-1.  **详细摘要**：用 2-3 段话全面总结文本的核心内容，确保准确性和完整性。不要过于简略，要让读者充分理解文本主旨。
-2.  **关键信息点**：列出 5-8 个最重要的事实、观点或论据。每个信息点应该：
-    - 具体且有深度
-    - 包含必要的细节和背景
-    - 使用 Markdown 列表格式
-3.  **行动建议**：从文本中识别并提炼出具体的、可执行的行动项。每个建议应该：
-    - 明确且可操作
-    - 包含执行的优先级或时间建议
-    - 如果没有明确的行动项，可以提供学习建议或思考方向
+Please provide the following:
+1.  **Detailed Summary**: Summarize the core content of the text in 2-3 paragraphs, ensuring accuracy and completeness. Do not be too brief; ensure the reader fully understands the main idea.
+2.  **Key Information Points**: List 5-8 most important facts, viewpoints, or arguments. Each point should:
+    - Be specific and insightful
+    - Include necessary details and context
+    - Use Markdown list format
+3.  **Actionable Advice**: Identify and refine specific, actionable items from the text. Each suggestion should:
+    - Be clear and actionable
+    - Include execution priority or timing suggestions
+    - If there are no clear action items, provide learning suggestions or thinking directions
 
-请严格遵循以下指导原则：
--   **语言**：所有输出必须使用用户指定的语言。
--   **格式**：请严格按照以下 Markdown 格式输出，确保每个部分都有明确的标题：
-    ## 摘要
-    [这里是详细的摘要内容，2-3段话，可以使用 Markdown 进行**加粗**或*斜体*强调重点]
+Please strictly follow these guidelines:
+-   **Language**: All output must be in the user's specified language.
+-   **Format**: Please strictly follow the Markdown format below, ensuring each section has a clear header:
+    ## Summary
+    [Detailed summary content here, 2-3 paragraphs, use Markdown **bold** or *italic* to emphasize key points]
 
-    ## 关键信息点
-    - [关键点1：包含具体细节和背景]
-    - [关键点2：包含具体细节和背景]
-    - [关键点3：包含具体细节和背景]
-    - [至少5个，最多8个关键点]
+    ## Key Information Points
+    - [Key Point 1: Include specific details and context]
+    - [Key Point 2: Include specific details and context]
+    - [Key Point 3: Include specific details and context]
+    - [At least 5, at most 8 key points]
 
-    ## 行动建议
-    - [行动项1：具体、可执行，包含优先级]
-    - [行动项2：具体、可执行，包含优先级]
-    - [如果没有明确行动项，提供学习建议或思考方向]
--   **深度优先**：分析要深入、全面，不要浮于表面。
--   **行动导向**：重点关注可执行的建议和下一步行动。
--   **只输出分析结果**：不要包含任何额外的寒暄、解释或引导性文字。
+    ## Actionable Advice
+    - [Action Item 1: Specific, actionable, include priority]
+    - [Action Item 2: Specific, actionable, include priority]
+    - [If no clear action items, provide learning suggestions or thinking directions]
+-   **Depth First**: Analysis should be deep and comprehensive, not superficial.
+-   **Action Oriented**: Focus on actionable suggestions and next steps.
+-   **Analysis Results Only**: Do not include any extra pleasantries, explanations, or leading text.
 """
 
 USER_PROMPT_GENERATE_SUMMARY = """
-请对以下长篇文本进行深度分析，提供：
-1.  详细的摘要（2-3段话，全面概括文本内容）
-2.  关键信息点列表（5-8个，包含具体细节）
-3.  可执行的行动建议（具体、明确，包含优先级）
+Please conduct a deep analysis of the following long text, providing:
+1.  Detailed Summary (2-3 paragraphs, comprehensive overview)
+2.  Key Information Points List (5-8 items, including specific details)
+3.  Actionable Advice (Specific, clear, including priority)
 
 ---
-**用户上下文信息:**
-用户姓名: {user_name}
-当前日期时间: {current_date_time_str}
-当前星期: {current_weekday}
-当前时区: {current_timezone_str}
-用户语言: {user_language}
+**User Context:**
+User Name: {user_name}
+Current Date/Time: {current_date_time_str}
+Weekday: {current_weekday}
+Timezone: {current_timezone_str}
+User Language: {user_language}
 ---
 
-**长篇文本内容:**
+**Long Text Content:**
 ```
 {long_text_content}
 ```
 
-请进行深入、全面的分析，重点关注可执行的行动建议。
+Please conduct a deep and comprehensive analysis, focusing on actionable advice.
 """
 
 # =================================================================
-# 前端 HTML 模板 (Jinja2 语法)
+# Frontend HTML Template (Jinja2 Syntax)
 # =================================================================
 
 HTML_TEMPLATE = """
@@ -99,7 +99,7 @@ HTML_TEMPLATE = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>精读:深度分析报告</title>
+    <title>Deep Reading: Deep Analysis Report</title>
     <style>
         :root {
             --primary-color: #4285f4;
@@ -245,29 +245,29 @@ HTML_TEMPLATE = """
 <body>
     <div class="container">
         <div class="header">
-            <h1>📖 精读：深度分析报告</h1>
+            <h1>📖 Deep Reading: Deep Analysis Report</h1>
         </div>
         <div class="user-context">
-            <span><strong>用户:</strong> {{ user_name }}</span>
-            <span><strong>分析时间:</strong> {{ current_date_time_str }}</span>
-            <span><strong>星期:</strong> {{ current_weekday }}</span>
+            <span><strong>User:</strong> {{ user_name }}</span>
+            <span><strong>Analysis Time:</strong> {{ current_date_time_str }}</span>
+            <span><strong>Weekday:</strong> {{ current_weekday }}</span>
         </div>
         <div class="content">
             <div class="section summary-section">
-                <h2><span class="icon">📝</span>详细摘要</h2>
+                <h2><span class="icon">📝</span>Detailed Summary</h2>
                 <div class="html-content">{{ summary_html | safe }}</div>
             </div>
             <div class="section keypoints-section">
-                <h2><span class="icon">💡</span>关键信息点</h2>
+                <h2><span class="icon">💡</span>Key Information Points</h2>
                 <div class="html-content">{{ keypoints_html | safe }}</div>
             </div>
             <div class="section actions-section">
-                <h2><span class="icon">🎯</span>行动建议</h2>
+                <h2><span class="icon">🎯</span>Actionable Advice</h2>
                 <div class="html-content">{{ actions_html | safe }}</div>
             </div>
         </div>
         <div class="footer">
-            <p>&copy; {{ current_year }} 精读 - 深度文本分析服务</p>
+            <p>&copy; {{ current_year }} Deep Reading - Deep Text Analysis Service</p>
         </div>
     </div>
 </body>
@@ -277,18 +277,20 @@ HTML_TEMPLATE = """
 class Action:
     class Valves(BaseModel):
         show_status: bool = Field(
-            default=True, description="是否在聊天界面显示操作状态更新。"
+            default=True,
+            description="Whether to show operation status updates in the chat interface.",
         )
         LLM_MODEL_ID: str = Field(
             default="gemini-2.5-flash",
-            description="用于文本分析的内置LLM模型ID。",
+            description="Built-in LLM Model ID used for text analysis.",
         )
         MIN_TEXT_LENGTH: int = Field(
             default=200,
-            description="进行深度分析所需的最小文本长度(字符数)。建议200字符以上。",
+            description="Minimum text length required for deep analysis (characters). Recommended 200+.",
         )
         RECOMMENDED_MIN_LENGTH: int = Field(
-            default=500, description="建议的最小文本长度，以获得最佳分析效果。"
+            default=500,
+            description="Recommended minimum text length for best analysis results.",
         )
 
     def __init__(self):
@@ -296,16 +298,20 @@ class Action:
 
     def _process_llm_output(self, llm_output: str) -> Dict[str, str]:
         """
-        解析LLM的Markdown输出,将其转换为HTML片段。
+        Parse LLM Markdown output and convert to HTML fragments.
         """
         summary_match = re.search(
-            r"##\s*摘要\s*\n(.*?)(?=\n##|$)", llm_output, re.DOTALL
+            r"##\s*Summary\s*\n(.*?)(?=\n##|$)", llm_output, re.DOTALL | re.IGNORECASE
         )
         keypoints_match = re.search(
-            r"##\s*关键信息点\s*\n(.*?)(?=\n##|$)", llm_output, re.DOTALL
+            r"##\s*Key Information Points\s*\n(.*?)(?=\n##|$)",
+            llm_output,
+            re.DOTALL | re.IGNORECASE,
         )
         actions_match = re.search(
-            r"##\s*行动建议\s*\n(.*?)(?=\n##|$)", llm_output, re.DOTALL
+            r"##\s*Actionable Advice\s*\n(.*?)(?=\n##|$)",
+            llm_output,
+            re.DOTALL | re.IGNORECASE,
         )
 
         summary_md = summary_match.group(1).strip() if summary_match else ""
@@ -314,24 +320,26 @@ class Action:
 
         if not any([summary_md, keypoints_md, actions_md]):
             summary_md = llm_output.strip()
-            logger.warning("LLM输出未遵循预期的Markdown格式。将整个输出视为摘要。")
+            logger.warning(
+                "LLM output did not follow expected Markdown format. Treating entire output as summary."
+            )
 
-        # 使用 'nl2br' 扩展将换行符 \n 转换为 <br>
+        # Use 'nl2br' extension to convert newlines \n to <br>
         md_extensions = ["nl2br"]
         summary_html = (
             markdown.markdown(summary_md, extensions=md_extensions)
             if summary_md
-            else '<p class="no-content">未能提取摘要信息。</p>'
+            else '<p class="no-content">Failed to extract summary.</p>'
         )
         keypoints_html = (
             markdown.markdown(keypoints_md, extensions=md_extensions)
             if keypoints_md
-            else '<p class="no-content">未能提取关键信息点。</p>'
+            else '<p class="no-content">Failed to extract key information points.</p>'
         )
         actions_html = (
             markdown.markdown(actions_md, extensions=md_extensions)
             if actions_md
-            else '<p class="no-content">暂无明确的行动建议。</p>'
+            else '<p class="no-content">No explicit actionable advice.</p>'
         )
 
         return {
@@ -342,7 +350,7 @@ class Action:
 
     def _build_html(self, context: dict) -> str:
         """
-        使用 Jinja2 模板和上下文数据构建最终的HTML内容。
+        Build final HTML content using Jinja2 template and context data.
         """
         template = Template(HTML_TEMPLATE)
         return template.render(context)
@@ -354,39 +362,39 @@ class Action:
         __event_emitter__: Optional[Any] = None,
         __request__: Optional[Request] = None,
     ) -> Optional[dict]:
-        logger.info("Action: 精读启动 (v2.0.0 - Deep Reading)")
+        logger.info("Action: Deep Reading Started (v2.0.0)")
 
         if isinstance(__user__, (list, tuple)):
             user_language = (
-                __user__[0].get("language", "zh-CN") if __user__ else "zh-CN"
+                __user__[0].get("language", "en-US") if __user__ else "en-US"
             )
-            user_name = __user__[0].get("name", "用户") if __user__[0] else "用户"
+            user_name = __user__[0].get("name", "User") if __user__[0] else "User"
             user_id = (
                 __user__[0]["id"]
                 if __user__ and "id" in __user__[0]
                 else "unknown_user"
             )
         elif isinstance(__user__, dict):
-            user_language = __user__.get("language", "zh-CN")
-            user_name = __user__.get("name", "用户")
+            user_language = __user__.get("language", "en-US")
+            user_name = __user__.get("name", "User")
             user_id = __user__.get("id", "unknown_user")
 
         now = datetime.now()
         current_date_time_str = now.strftime("%Y-%m-%d %H:%M:%S")
         current_weekday = now.strftime("%A")
         current_year = now.strftime("%Y")
-        current_timezone_str = "未知时区"
+        current_timezone_str = "Unknown Timezone"
 
         original_content = ""
         try:
             messages = body.get("messages", [])
             if not messages or not messages[-1].get("content"):
-                raise ValueError("无法获取有效的用户消息内容。")
+                raise ValueError("Unable to get valid user message content.")
 
             original_content = messages[-1]["content"]
 
             if len(original_content) < self.valves.MIN_TEXT_LENGTH:
-                short_text_message = f"文本内容过短({len(original_content)}字符)，建议至少{self.valves.MIN_TEXT_LENGTH}字符以获得有效的深度分析。\n\n💡 提示：对于短文本，建议使用'⚡ 闪记卡'进行快速提炼。"
+                short_text_message = f"Text content too short ({len(original_content)} chars), recommended at least {self.valves.MIN_TEXT_LENGTH} chars for effective deep analysis.\n\n💡 Tip: For short texts, consider using '⚡ Flash Card' for quick refinement."
                 if __event_emitter__:
                     await __event_emitter__(
                         {
@@ -408,7 +416,7 @@ class Action:
                             "type": "notification",
                             "data": {
                                 "type": "info",
-                                "content": f"文本长度为{len(original_content)}字符。建议{self.valves.RECOMMENDED_MIN_LENGTH}字符以上可获得更好的分析效果。",
+                                "content": f"Text length is {len(original_content)} chars. Recommended {self.valves.RECOMMENDED_MIN_LENGTH}+ chars for best analysis results.",
                             },
                         }
                     )
@@ -419,7 +427,7 @@ class Action:
                         "type": "notification",
                         "data": {
                             "type": "info",
-                            "content": "📖 精读已启动，正在进行深度分析...",
+                            "content": "📖 Deep Reading started, analyzing deeply...",
                         },
                     }
                 )
@@ -428,7 +436,7 @@ class Action:
                         {
                             "type": "status",
                             "data": {
-                                "description": "📖 精读: 深入分析文本，提炼精华...",
+                                "description": "📖 Deep Reading: Analyzing text, extracting essence...",
                                 "done": False,
                             },
                         }
@@ -454,7 +462,7 @@ class Action:
 
             user_obj = Users.get_user_by_id(user_id)
             if not user_obj:
-                raise ValueError(f"无法获取用户对象, 用户ID: {user_id}")
+                raise ValueError(f"Unable to get user object, User ID: {user_id}")
 
             llm_response = await generate_chat_completion(
                 __request__, llm_payload, user_obj
@@ -482,7 +490,10 @@ class Action:
                 await __event_emitter__(
                     {
                         "type": "status",
-                        "data": {"description": "📖 精读: 分析完成!", "done": True},
+                        "data": {
+                            "description": "📖 Deep Reading: Analysis complete!",
+                            "done": True,
+                        },
                     }
                 )
                 await __event_emitter__(
@@ -490,18 +501,18 @@ class Action:
                         "type": "notification",
                         "data": {
                             "type": "success",
-                            "content": f"📖 精读完成，{user_name}！深度分析报告已生成。",
+                            "content": f"📖 Deep Reading complete, {user_name}! Deep analysis report generated.",
                         },
                     }
                 )
 
         except Exception as e:
-            error_message = f"精读处理失败: {str(e)}"
-            logger.error(f"精读错误: {error_message}", exc_info=True)
-            user_facing_error = f"抱歉, 精读在处理时遇到错误: {str(e)}。\n请检查Open WebUI后端日志获取更多详情。"
+            error_message = f"Deep Reading processing failed: {str(e)}"
+            logger.error(f"Deep Reading Error: {error_message}", exc_info=True)
+            user_facing_error = f"Sorry, Deep Reading encountered an error while processing: {str(e)}.\nPlease check Open WebUI backend logs for more details."
             body["messages"][-1][
                 "content"
-            ] = f"{original_content}\n\n❌ **错误:** {user_facing_error}"
+            ] = f"{original_content}\n\n❌ **Error:** {user_facing_error}"
 
             if __event_emitter__:
                 if self.valves.show_status:
@@ -509,7 +520,7 @@ class Action:
                         {
                             "type": "status",
                             "data": {
-                                "description": "精读: 处理失败。",
+                                "description": "Deep Reading: Processing failed.",
                                 "done": True,
                             },
                         }
@@ -519,7 +530,7 @@ class Action:
                         "type": "notification",
                         "data": {
                             "type": "error",
-                            "content": f"精读处理失败, {user_name}!",
+                            "content": f"Deep Reading processing failed, {user_name}!",
                         },
                     }
                 )

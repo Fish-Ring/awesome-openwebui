@@ -1,11 +1,11 @@
 """
-title: Flash Card
-author: Antigravity
-author_url: https://github.com/open-webui
-funding_url: https://github.com/open-webui
+title: 闪记卡 (Flash Card)
+author: Fu-Jie
+author_url: https://github.com/Fu-Jie
+funding_url: https://github.com/Fu-Jie/awesome-openwebui
 version: 0.2.1
 icon_url: data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj48c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjRkZENzAwIi8+PHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjRkZBNzAwIi8+PC9saW5lYXJHcmFkaWVudD48L2RlZnM+PHBhdGggZD0iTTEzIDJMMyA3djEzbDEwIDV2LTZ6IiBmaWxsPSJ1cmwoI2cpIi8+PHBhdGggZD0iTTEzIDJ2Nmw4LTN2MTNsLTggM3YtNnoiIGZpbGw9IiM2NjdlZWEiLz48cGF0aCBkPSJNMTMgMnY2bTAgNXYxMCIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjEuNSIgc3Ryb2tlLW9wYWNpdHk9IjAuMyIvPjwvc3ZnPg==
-description: Quickly generates beautiful flashcards from text, extracting key points and categories.
+description: 快速将文本提炼为精美的学习记忆卡片，支持核心要点提取与分类。
 """
 
 from pydantic import BaseModel, Field

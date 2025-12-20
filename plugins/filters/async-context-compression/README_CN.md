@@ -16,6 +16,8 @@
 -   ✅ **灵活保留策略**: 可自由配置保留对话头部和尾部的消息数量，确保关键信息和上下文的连贯性。
 -   ✅ **智能注入**: 将生成的历史摘要智能地注入到新的上下文中。
 
+详细的工作原理和流程请参考 [工作流程指南](WORKFLOW_GUIDE_CN.md)。
+
 ---
 
 ## 安装与配置
@@ -49,16 +51,51 @@
 
 您可以在过滤器的设置中调整以下参数：
 
+### 核心参数
+
 | 参数 | 默认值 | 描述 |
 | :--- | :--- | :--- |
 | `priority` | `10` | 过滤器执行顺序，数值越小越先执行。 |
-| `compression_threshold` | `15` | 当总消息数达到此值时，将在后台触发摘要生成。 |
-| `keep_first` | `1` | 始终保留对话开始的 N 条消息。第一条消息通常包含重要的系统提示。 |
-| `keep_last` | `6` | 始终保留对话末尾的 N 条消息，以确保上下文连贯。 |
-| `summary_model` | `None` | 用于生成摘要的模型。**强烈建议**配置一个快速、经济的兼容模型（如 `gemini-2.5-flash`）。如果留空，将尝试使用当前对话的模型，但这可能因模型不兼容（如 Pipe 模型）而失败。 |
-| `max_summary_tokens` | `4000` | 生成摘要时允许的最大 Token 数。 |
-| `summary_temperature` | `0.3` | 控制摘要生成的随机性，较低的值结果更稳定。 |
-| `debug_mode` | `true` | 是否在日志中打印详细的调试信息。生产环境建议设为 `false`。 |
+| `compression_threshold_tokens` | `64000` | **(重要)** 当上下文总 Token 数超过此值时，将在后台触发摘要生成。建议设置为模型最大上下文窗口的 50%-70%。 |
+| `max_context_tokens` | `128000` | **(重要)** 上下文的硬性上限。如果超过此值，将强制移除最早的消息（保留受保护消息除外）。防止 Token 溢出。 |
+| `keep_first` | `1` | 始终保留对话开始的 N 条消息。第一条消息通常包含重要的系统提示或环境变量，建议至少保留 1 条。 |
+| `keep_last` | `6` | 始终保留对话末尾的 N 条消息，以确保最近对话的连贯性。 |
+
+### 摘要生成配置
+
+| 参数 | 默认值 | 描述 |
+| :--- | :--- | :--- |
+| `summary_model` | `None` | 用于生成摘要的模型 ID。**强烈建议**配置一个快速、经济且上下文窗口较大的模型（如 `gemini-2.5-flash`, `deepseek-v3`）。如果留空，将尝试使用当前对话的模型。 |
+| `max_summary_tokens` | `16384` | 生成摘要时允许的最大 Token 数。 |
+| `summary_temperature` | `0.1` | 控制摘要生成的随机性，较低的值结果更稳定。 |
+
+### 高级配置
+
+#### `model_thresholds` (模型特定阈值)
+
+这是一个字典配置，允许您为特定的模型 ID 覆盖全局的 `compression_threshold_tokens` 和 `max_context_tokens`。这对于混合使用不同上下文窗口大小的模型非常有用。
+
+**默认配置包含了主流模型（如 GPT-4, Claude 3.5, Gemini 1.5/2.0, Qwen 2.5/3, DeepSeek V3 等）的推荐阈值。**
+
+**配置示例：**
+
+```json
+{
+  "gpt-4": {
+    "compression_threshold_tokens": 8000,
+    "max_context_tokens": 32000
+  },
+  "gemini-2.5-flash": {
+    "compression_threshold_tokens": 734000,
+    "max_context_tokens": 1048576
+  }
+}
+```
+
+#### `debug_mode`
+
+-   **默认值**: `true`
+-   **描述**: 是否在 Open WebUI 的控制台日志中打印详细的调试信息（如 Token 计数、压缩进度、数据库操作等）。生产环境建议设为 `false`。
 
 ---
 
@@ -68,10 +105,10 @@
     -   **解决**：请确认 `DATABASE_URL` 环境变量已正确设置，并且数据库服务运行正常。
 
 -   **问题：摘要未生成**
-    -   **解决**：检查 `compression_threshold` 是否已达到，并确认 `summary_model` 配置正确。查看日志以获取详细错误。
+    -   **解决**：检查 `compression_threshold_tokens` 是否已达到，并确认 `summary_model` 配置正确。查看日志以获取详细错误。
 
 -   **问题：初始的系统提示丢失**
     -   **解决**：确保 `keep_first` 的值大于 0，以保留包含重要信息的初始消息。
 
 -   **问题：压缩效果不明显**
-    -   **解决**：尝试适当提高 `compression_threshold`，或减少 `keep_first` / `keep_last` 的值。
+    -   **解决**：尝试适当提高 `compression_threshold_tokens`，或减少 `keep_first` / `keep_last` 的值。
