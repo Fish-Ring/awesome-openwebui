@@ -1,6 +1,6 @@
 # OpenWebUI Extras
 
-[English](./README.md) | 中文
+[English](./README_EN.md) | 中文
 
 OpenWebUI 增强功能集合。包含个人开发与收集的### 🧩 插件 (Plugins)
 
