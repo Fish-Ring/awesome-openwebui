@@ -67,34 +67,30 @@ HTML_WRAPPER_TEMPLATE = """
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
         body { 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
-            margin: 0; 
-            padding: 10px; 
-            background-color: transparent; 
+            background-color: #f8fafc; 
         }
         #main-container { 
             display: flex; 
-            flex-wrap: wrap; 
-            gap: 20px; 
-            align-items: flex-start; 
+            flex-direction: column;
             width: 100%;
+            height: 100%;
         }
         .plugin-item { 
-            flex: 1 1 400px; /* 默认宽度，允许伸缩 */
-            min-width: 300px; 
+            flex: 1;
+            display: flex;
+            flex-direction: column;
             background: white; 
-            border-radius: 12px; 
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
             overflow: hidden; 
-            border: 1px solid #e5e7eb; 
             transition: all 0.3s ease;
-        }
-        .plugin-item:hover {
-            box-shadow: 0 10px 15px rgba(0,0,0,0.1);
-        }
-        @media (max-width: 768px) { 
-            .plugin-item { flex: 1 1 100%; } 
+            height: 100%;
         }
         /* STYLES_INSERTION_POINT */
     </style>
@@ -135,51 +131,62 @@ CSS_TEMPLATE_MINDMAP = """
             display: flex;
             flex-direction: column;
         }
-        .header {
-            background: var(--header-gradient);
-            color: white;
-            padding: 20px 24px;
-            text-align: center;
-        }
-        .header h1 {
-            margin: 0;
-            font-size: 1.5em;
-            font-weight: 600;
-            text-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        .mindmap-container-wrapper * {
+            box-sizing: border-box;
         }
         .user-context {
-            font-size: 0.8em;
+            font-size: 0.9em;
             color: var(--muted-text-color);
-            background-color: #eceff1;
-            padding: 8px 16px;
+            background-color: #f8fafc;
+            padding: 12px 20px;
             display: flex;
-            justify-content: space-around;
+            justify-content: space-between;
+            align-items: center;
             flex-wrap: wrap;
             border-bottom: 1px solid var(--border-color);
+        }
+        .user-context .title {
+            color: var(--text-color);
+            font-weight: 700;
+            font-size: 1.1em;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .user-context .info-group {
+            display: flex;
+            gap: 16px;
         }
         .user-context span { margin: 2px 8px; }
         .content-area { 
             padding: 20px;
             flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
         }
         .markmap-container {
             position: relative;
             background-color: #fff;
             background-image: radial-gradient(var(--border-color) 0.5px, transparent 0.5px);
             background-size: 20px 20px;
-            border-radius: 8px;
-            padding: 16px;
-            min-height: 500px;
+            padding: 10px;
+            flex-grow: 1;
             display: flex;
             justify-content: center;
             align-items: center;
             border: 1px solid var(--border-color);
             box-shadow: inset 0 2px 6px rgba(0,0,0,0.03);
+            overflow: hidden;
+            border-radius: 4px;
         }
         .download-area {
             text-align: center;
-            padding-top: 20px;
-            margin-top: 20px;
+            padding: 20px 0;
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            background: white;
             border-top: 1px solid var(--border-color);
         }
         .download-btn {
@@ -192,13 +199,15 @@ CSS_TEMPLATE_MINDMAP = """
             font-weight: 500;
             cursor: pointer;
             transition: all 0.2s ease-in-out;
-            margin: 0 6px;
             display: inline-flex;
             align-items: center;
             gap: 6px;
         }
         .download-btn.secondary {
             background-color: var(--secondary-color);
+        }
+        .download-btn.locate {
+            background-color: #546e7a;
         }
         .download-btn:hover {
             transform: translateY(-1px);
@@ -207,12 +216,15 @@ CSS_TEMPLATE_MINDMAP = """
         .download-btn.copied {
             background-color: #2e7d32;
         }
+        .download-btn.copied {
+            background-color: #2e7d32;
+        }
         .footer {
             text-align: center;
-            padding: 16px;
-            font-size: 0.8em;
+            padding: 12px;
+            font-size: 0.75em;
             color: #90a4ae;
-            background-color: #eceff1;
+            background-color: #f8fafc;
             border-top: 1px solid var(--border-color);
         }
         .footer a {
@@ -236,16 +248,20 @@ CSS_TEMPLATE_MINDMAP = """
 
 CONTENT_TEMPLATE_MINDMAP = """
         <div class="mindmap-container-wrapper">
-            <div class="header">
-                <h1>🧠 智能思维导图</h1>
-            </div>
             <div class="user-context">
-                <span><strong>用户:</strong> {user_name}</span>
-                <span><strong>时间:</strong> {current_date_time_str}</span>
+                <div class="title">思维导图</div>
+                <div class="info-group">
+                    <span><strong>用户:</strong> {user_name}</span>
+                    <span><strong>时间:</strong> {current_date_time_str}</span>
+                </div>
             </div>
             <div class="content-area">
                 <div class="markmap-container" id="markmap-container-{unique_id}"></div>
                 <div class="download-area">
+                    <button id="locate-btn-{unique_id}" class="download-btn locate">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/></svg>
+                        <span class="btn-text">定位</span>
+                    </button>
                     <button id="download-svg-btn-{unique_id}" class="download-btn">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                         <span class="btn-text">SVG</span>
@@ -287,7 +303,7 @@ SCRIPT_TEMPLATE_MINDMAP = """
             try {
                 const svgEl = document.createElementNS("http://www.w3.org/2000/svg", "svg");
                 svgEl.style.width = '100%';
-                svgEl.style.height = '500px'; 
+                svgEl.style.height = '100%'; 
                 containerEl.innerHTML = ''; 
                 containerEl.appendChild(svgEl);
 
@@ -298,14 +314,21 @@ SCRIPT_TEMPLATE_MINDMAP = """
                 const style = (id) => `${id} text { font-size: 14px !important; }`;
 
                 const options = { 
-                    autoFit: true,
-                    style: style
+                    autoFit: false,
+                    fitRatio: 0.85,
+                    style: style,
+                    duration: 300
                 };
-                Markmap.create(svgEl, options, root);
+                const mm = Markmap.create(svgEl, options, root);
+                
+                // Disable double-click to zoom
+                d3.select(svgEl).on("dblclick.zoom", null);
+
+                setTimeout(() => mm.fit(), 100);
                 
                 containerEl.dataset.markmapRendered = 'true';
                 
-                attachDownloadHandlers(uniqueId);
+                attachHandlers(uniqueId, mm);
 
             } catch (error) {
                 console.error('Markmap rendering error:', error);
@@ -313,10 +336,18 @@ SCRIPT_TEMPLATE_MINDMAP = """
             }
         };
 
-        const attachDownloadHandlers = (uniqueId) => {
+        const attachHandlers = (uniqueId, mm) => {
+            const locateBtn = document.getElementById('locate-btn-' + uniqueId);
             const downloadSvgBtn = document.getElementById('download-svg-btn-' + uniqueId);
             const downloadMdBtn = document.getElementById('download-md-btn-' + uniqueId);
             const containerEl = document.getElementById('markmap-container-' + uniqueId);
+
+            if (locateBtn) {
+                locateBtn.addEventListener('click', (event) => {
+                    event.stopPropagation();
+                    mm.fit();
+                });
+            }
 
             const showFeedback = (button, isSuccess) => {
                 const buttonText = button.querySelector('.btn-text');
