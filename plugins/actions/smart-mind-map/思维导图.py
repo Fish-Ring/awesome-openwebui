@@ -1,7 +1,7 @@
 """
 title: 智绘心图
 icon_url: data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+CiAgPGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMyIgZmlsbD0iY3VycmVudENvbG9yIi8+CiAgPGxpbmUgeDE9IjEyIiB5MT0iOSIgeDI9IjEyIiB5Mj0iNCIvPgogIDxjaXJjbGUgY3g9IjEyIiBjeT0iMyIgcj0iMS41Ii8+CiAgPGxpbmUgeDE9IjEyIiB5MT0iMTUiIHgyPSIxMiIgeTI9IjIwIi8+CiAgPGNpcmNsZSBjeD0iMTIiIGN5PSIyMSIgcj0iMS41Ii8+CiAgPGxpbmUgeDE9IjkiIHkxPSIxMiIgeDI9IjQiIHkyPSIxMiIvPgogIDxjaXJjbGUgY3g9IjMiIGN5PSIxMiIgcj0iMS41Ii8+CiAgPGxpbmUgeDE9IjE1IiB5MT0iMTIiIHgyPSIyMCIgeTI9IjEyIi8+CiAgPGNpcmNsZSBjeD0iMjEiIGN5PSIxMiIgcj0iMS41Ii8+CiAgPGxpbmUgeDE9IjEwLjUiIHkxPSIxMC41IiB4Mj0iNiIgeTI9IjYiLz4KICA8Y2lyY2xlIGN4PSI1IiBjeT0iNSIgcj0iMS41Ii8+CiAgPGxpbmUgeDE9IjEzLjUiIHkxPSIxMC41IiB4Mj0iMTgiIHkyPSI2Ii8+CiAgPGNpcmNsZSBjeD0iMTkiIGN5PSI1IiByPSIxLjUiLz4KICA8bGluZSB4MT0iMTAuNSIgeTE9IjEzLjUiIHgyPSI2IiB5Mj0iMTgiLz4KICA8Y2lyY2xlIGN4PSI1IiBjeT0iMTkiIHI9IjEuNSIvPgogIDxsaW5lIHgxPSIxMy41IiB5MT0iMTMuNSIgeDI9IjE4IiB5Mj0iMTgiLz4KICA8Y2lyY2xlIGN4PSIxOSIgY3k9IjE5IiByPSIxLjUiLz4KPC9zdmc+
-version: 0.7.2
+version: 0.7.3
 description: 智能分析文本内容,生成交互式思维导图,帮助用户结构化和可视化知识。
 """
 
@@ -26,7 +26,7 @@ SYSTEM_PROMPT_MINDMAP_ASSISTANT = """
 你是一个专业的思维导图生成助手,能够高效地分析用户提供的长篇文本,并将其核心主题、关键概念、分支和子分支结构化为标准的Markdown列表语法,以便Markmap.js进行渲染。
 
 请严格遵循以下指导原则:
--   **语言**: 所有输出必须使用用户指定的语言。
+-   **语言**: 所有输出 must 使用用户指定的语言。
 -   **格式**: 你的输出必须严格为Markdown列表格式,并用```markdown 和 ``` 包裹。
     -   使用 `#` 定义中心主题(根节点)。
     -   使用 `-` 和两个空格的缩进表示分支和子分支。
@@ -216,9 +216,6 @@ CSS_TEMPLATE_MINDMAP = """
         .download-btn.copied {
             background-color: #2e7d32;
         }
-        .download-btn.copied {
-            background-color: #2e7d32;
-        }
         .footer {
             text-align: center;
             padding: 12px;
@@ -286,8 +283,23 @@ SCRIPT_TEMPLATE_MINDMAP = """
     <script src="https://cdn.jsdelivr.net/npm/markmap-view@0.17"></script>
     <script>
       (function() {
+        const uniqueId = "{unique_id}";
+        const maxRetries = 100;
+        let retries = 0;
+
+        const checkAndRender = () => {
+            if (window.markmap && window.d3) {
+                renderMindmap();
+            } else if (retries < maxRetries) {
+                retries++;
+                setTimeout(checkAndRender, 100);
+            } else {
+                const containerEl = document.getElementById('markmap-container-' + uniqueId);
+                if (containerEl) containerEl.innerHTML = '<div class="error-message">⚠️ 库加载超时，请刷新重试。</div>';
+            }
+        };
+
         const renderMindmap = () => {
-            const uniqueId = "{unique_id}";
             const containerEl = document.getElementById('markmap-container-' + uniqueId);
             if (!containerEl || containerEl.dataset.markmapRendered) return;
 
@@ -414,9 +426,9 @@ SCRIPT_TEMPLATE_MINDMAP = """
         };
 
         if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', renderMindmap);
+            document.addEventListener('DOMContentLoaded', checkAndRender);
         } else {
-            renderMindmap();
+            checkAndRender();
         }
       })();
     </script>
@@ -532,7 +544,7 @@ class Action:
         __event_emitter__: Optional[Any] = None,
         __request__: Optional[Request] = None,
     ) -> Optional[dict]:
-        logger.info("Action: 智绘心图 (v12 - Final Feedback Fix) started")
+        logger.info("Action: 智绘心图 started")
 
         if isinstance(__user__, (list, tuple)):
             user_language = (
@@ -706,7 +718,7 @@ class Action:
             await self._emit_notification(
                 __event_emitter__, f"思维导图已生成，{user_name}！", "success"
             )
-            logger.info("Action: 智绘心图 (v12) completed successfully")
+            logger.info("Action: 智绘心图 completed successfully")
 
         except Exception as e:
             error_message = f"智绘心图处理失败: {str(e)}"
