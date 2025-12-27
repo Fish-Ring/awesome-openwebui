@@ -278,13 +278,13 @@ CONTENT_TEMPLATE_MINDMAP = """
 """
 
 SCRIPT_TEMPLATE_MINDMAP = """
-    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
-    <script src="https://cdn.jsdelivr.net/npm/markmap-lib@0.17"></script>
-    <script src="https://cdn.jsdelivr.net/npm/markmap-view@0.17"></script>
+    <script src="https://cdn.jsdmirror.com/npm/d3@7"></script>
+    <script src="https://cdn.jsdmirror.com/npm/markmap-lib@0.17"></script>
+    <script src="https://cdn.jsdmirror.com/npm/markmap-view@0.17"></script>
     <script>
       (function() {
         const uniqueId = "{unique_id}";
-        const maxRetries = 100;
+        const maxRetries = 200;
         let retries = 0;
 
         const checkAndRender = () => {
@@ -292,7 +292,7 @@ SCRIPT_TEMPLATE_MINDMAP = """
                 renderMindmap();
             } else if (retries < maxRetries) {
                 retries++;
-                setTimeout(checkAndRender, 100);
+                setTimeout(checkAndRender, 150);
             } else {
                 const containerEl = document.getElementById('markmap-container-' + uniqueId);
                 if (containerEl) containerEl.innerHTML = '<div class="error-message">⚠️ 库加载超时，请刷新重试。</div>';
@@ -380,28 +380,20 @@ SCRIPT_TEMPLATE_MINDMAP = """
                 }, 2500);
             };
 
-            const copyToClipboard = (content, button) => {
-                if (navigator.clipboard && window.isSecureContext) {
-                    navigator.clipboard.writeText(content).then(() => {
-                        showFeedback(button, true);
-                    }, () => {
-                        showFeedback(button, false);
-                    });
-                } else {
-                    const textArea = document.createElement('textarea');
-                    textArea.value = content;
-                    textArea.style.position = 'fixed';
-                    textArea.style.opacity = '0';
-                    document.body.appendChild(textArea);
-                    textArea.focus();
-                    textArea.select();
-                    try {
-                        document.execCommand('copy');
-                        showFeedback(button, true);
-                    } catch (err) {
-                        showFeedback(button, false);
-                    }
-                    document.body.removeChild(textArea);
+            const downloadFile = (content, filename, mimeType) => {
+                try {
+                    const dataUrl = 'data:' + mimeType + ';charset=utf-8,' + encodeURIComponent(content);
+                    const a = document.createElement('a');
+                    a.href = dataUrl;
+                    a.download = filename;
+                    a.style.display = 'none';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    return true;
+                } catch (e) {
+                    console.error('Download failed:', e);
+                    return false;
                 }
             };
 
@@ -411,7 +403,8 @@ SCRIPT_TEMPLATE_MINDMAP = """
                     const svgEl = containerEl.querySelector('svg');
                     if (svgEl) {
                         const svgData = new XMLSerializer().serializeToString(svgEl);
-                        copyToClipboard(svgData, downloadSvgBtn);
+                        const success = downloadFile(svgData, 'mindmap.svg', 'image/svg+xml');
+                        showFeedback(downloadSvgBtn, success);
                     }
                 });
             }
@@ -420,7 +413,8 @@ SCRIPT_TEMPLATE_MINDMAP = """
                 downloadMdBtn.addEventListener('click', (event) => {
                     event.stopPropagation();
                     const markdownContent = document.getElementById('markdown-source-' + uniqueId).textContent;
-                    copyToClipboard(markdownContent, downloadMdBtn);
+                    const success = downloadFile(markdownContent, 'mindmap.md', 'text/markdown');
+                    showFeedback(downloadMdBtn, success);
                 });
             }
         };
